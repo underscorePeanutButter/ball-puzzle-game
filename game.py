@@ -1,11 +1,141 @@
 import pygame
 import sys
 
-class Map:
-    def __init__(self, size, ball_delay, layout):
-        self.size = size
-        self.ball_delay = ball_delay
-        self.layout = layout
+class Player:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.old_x = x
+        self.old_y = y
+
+        self.sprite = sprites["player"]
+
+        self.balls = []
+
+    def update(self):
+        pass
+
+    def render(self):
+        render_x = round(self.x) * grid_space_size
+        render_y = round(self.y) * grid_space_size
+
+        screen.blit(self.sprite, (render_x, render_y))
+
+    def shoot(self):
+        self.balls.append(Ball(self.x, self.y, -1, 0))
+
+    def handle_new_location(self):
+        pass
+
+    def handle_keypresses(self, key):
+        # Movement
+        if key == pygame.K_RIGHT:
+            self.x += 1
+        elif key == pygame.K_LEFT:
+            self.x -= 1
+        elif key == pygame.K_DOWN:
+            self.y += 1
+        elif key == pygame.K_UP:
+            self.y -= 1
+
+        # Actions
+        if key == pygame.K_SPACE:
+            self.shoot()
+
+class Ball:
+    def __init__(self, x, y, speed_x, speed_y):
+        self.x = x
+        self.y = y
+        self.old_x = x
+        self.old_y = y
+
+        self.speed = 0.01
+
+        self.speed_x = self.speed * speed_x
+        self.speed_y = self.speed * speed_y
+
+        self.sprite = sprites["ball"]
+
+    def update(self):
+        self.x += self.speed_x
+        self.y += self.speed_y
+
+        rounded_x = round(self.x)
+        rounded_y = round(self.y)
+
+        if self.old_x != rounded_x:
+            self.handle_new_location()
+
+        if self.old_y != rounded_y:
+            self.handle_new_location()
+
+        self.old_x = rounded_x
+        self.old_y = rounded_y
+
+    def render(self):
+        render_x = round(self.x) * grid_space_size
+        render_y = round(self.y) * grid_space_size
+
+        screen.blit(self.sprite, (render_x, render_y))
+
+    def handle_new_location(self):
+        collision_object = check_collisions(self, (0, 0))
+
+        if type(collision_object) == Wall:
+            self.speed_x *= -1
+            self.speed_y *= -1
+
+        elif type(collision_object) == Wedge:
+            self.x = round(self.x)
+            self.y = round(self.y)
+
+            if collision_object.direction == "ul":
+                if self.speed_x < 0:
+                    self.speed_y = -self.speed_x
+                    self.speed_x = 0
+                elif self.speed_x > 0:
+                    self.speed_x *= -1
+                elif self.speed_y < 0:
+                    self.speed_x = -self.speed_y
+                    self.speed_y = 0
+                elif self.speed_y > 0:
+                    self.speed_y *= -1
+
+            elif collision_object.direction == "dl":
+                if self.speed_x < 0:
+                    self.speed_y = self.speed_x
+                    self.speed_x = 0
+                elif self.speed_x > 0:
+                    self.speed_x *= -1
+                elif self.speed_y < 0:
+                    self.speed_y *= -1
+                elif self.speed_y > 0:
+                    self.speed_x = self.speed_y
+                    self.speed_y = 0
+
+            elif collision_object.direction == "ur":
+                if self.speed_x < 0:
+                    self.speed_x *= -1
+                elif self.speed_x > 0:
+                    self.speed_y = self.speed_x
+                    self.speed_x = 0
+                elif self.speed_y < 0:
+                    self.speed_x = self.speed_y
+                    self.speed_x = 0
+                elif self.speed_y > 0:
+                    self.speed_y *= -1
+
+            elif collision_object.direction == "dr":
+                if self.speed_x < 0:
+                    self.speed_x *= -1
+                elif self.speed_x > 0:
+                    self.speed_y = - self.speed_x
+                    self.speed_x = 0
+                elif self.speed_y < 0:
+                    self.speed_y *= -1
+                elif self.speed_y > 0:
+                    self.speed_x = -self.speed_y
+                    self.speed_y = 0
 
 class Wall:
     def __init__(self):
@@ -15,111 +145,25 @@ class Wedge:
     def __init__(self, direction):
         self.direction = direction
 
-        self.sprite = sprites["wedges"][self.direction]
+        self.sprite = sprites["wedges"][direction]
 
-class Player:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+def check_collisions(object, offset):
+    try:
+        check_x = round(object.x) + offset[0]
+        check_y = round(object.y) + offset[1]
 
-        self.sprite = sprites["player"]
+        return test_map_layout[check_y][check_x]
 
-        self.balls = []
+    except IndexError:
+        if type(object) == Ball:
+            player.balls.remove(object)
 
-    def shoot(self):
-        self.balls.append(Ball(self.x, self.y, "left"))
-
-class Ball:
-    def __init__(self, x, y, direction):
-        self.x = x
-        self.y = y
-        self.direction = direction
-
-        self.sprite = sprites["ball"]
-
-    def update(self):
-        if self.direction == "left":
-            self.x -= 0.01
-        elif self.direction == "right":
-            self.x += 0.01
-        elif self.direction == "up":
-            self.y -= 0.01
-        elif self.direction == "down":
-            self.y += 0.01
-
-        if self.x < 0 or self.x >= screen_size[0] / 60 or self.y < 0 or self.y >= screen_size[1] / 60:
-            player.balls.remove(self)
-
-    def check_collisions(self):
-        if round(self.y) < len(test_map.layout) and round(self.y >= 0) and round(self.x) < len(test_map.layout[0]) and round(self.x >= 0):
-            focused_map_content = test_map.layout[round(self.y)][round(self.x)]
-
-            if type(focused_map_content) == Wall:
-                if self.direction == "right":
-                    self.x -= 1
-                    self.direction = "left"
-                elif self.direction == "left":
-                    self.x += 1
-                    self.direction = "right"
-                elif self.direction == "up":
-                    self.y += 1
-                    self.direction = "down"
-                elif self.direction == "down":
-                    self.y -= 1
-                    self.direction = "up"
-
-            elif type(focused_map_content) == Wedge:
-                if focused_map_content.direction == "bottomleft":
-                    if self.direction == "left":
-                        self.direction = "up"
-                        self.y -= 1
-                    elif self.direction == "down":
-                        self.direction = "right"
-                        self.x += 1
-                elif focused_map_content.direction == "topleft":
-                    if self.direction == "left":
-                        self.direction = "down"
-                        self.y += 1
-                    elif self.direction == "up":
-                        self.direction = "right"
-                        self.x += 1
-
-            for ball in player.balls:
-                if ball == self:
-                    continue
-
-                if round(self.x) == round(ball.x) and round(self.y) == round(ball.y):
-                    if self.direction == "left":
-                        self.direction = "right"
-                        self.x += 1
-                        ball.direction = "left"
-                        ball.x -= 1
-                    elif self.direction == "right":
-                        self.direction = "left"
-                        self.x -= 1
-                        ball.direction = "right"
-                        ball.x += 1
-                    elif self.direction == "up":
-                        self.direction = "down"
-                        self.y += 1
-                        ball.direction = "up"
-                        ball.y -= 1
-                    elif self.direction == "down":
-                        self.direction = "up"
-                        self.y -= 1
-                        ball.direction = "down"
-                        ball.y += 1
-
-print("Starting pygame... ", end="")
+            return None
 
 pygame.init()
 
-print("done.")
-print("Loading variables... ", end="")
-
-screen_size = (800, 600)
-
-print("done.")
+screen_size = (600, 600)
+screen = pygame.display.set_mode(screen_size)
 
 black = (0, 0, 0)
 white = (255, 255, 255)
@@ -127,71 +171,57 @@ red = (255, 0, 0)
 green = (0, 255, 0)
 blue = (0, 0, 255)
 
-print("Starting window... ", end="")
+grid_space_size = 60
 
-screen = pygame.display.set_mode(screen_size)
-
-print("done.")
-print("Loading sprites... ", end="")
-
-sprites = {"wedges": {"bottomleft": pygame.image.load("wedge_bottom_left.png"),\
-                      "bottomright": pygame.image.load("wedge_bottom_right.png"),\
-                      "topleft": pygame.image.load("wedge_top_left.png"),\
-                      "topright": pygame.image.load("wedge_top_right.png")},
+sprites = {"wedges": {"dl": pygame.image.load("wedge_bottom_left.png"),\
+                      "dr": pygame.image.load("wedge_bottom_right.png"),\
+                      "ul": pygame.image.load("wedge_top_left.png"),\
+                      "ur": pygame.image.load("wedge_top_right.png")},
            "player": pygame.image.load("player.png"),\
            "wall": pygame.image.load("wall.png"),\
            "ball": pygame.image.load("ball.png")}
 
-print("done.")
+player = Player(0, 0)
 
-test_map_layout = [[None, None, None, None, None],
-                   [Wall(), Wall(), Wall(), None, Wall()],
-                   [Wall(), Wedge("topleft"), None, None, None],
-                   [Wall(), None, Wall(), None, Wall()],
-                   [Wall(), Wedge("bottomleft"), None, None, None],
-                   [Wall(), Wall(), Wall(), None, Wall()],
-                   [None, None, Wall(), None, Wall()],
-                   [None, None, Wall(), Wall(), Wall()]]
-test_map = Map(7, 10, test_map_layout)
-
-player = Player(6, 0)
+test_map_layout =\
+[[Wall(),Wall(),Wall(),None,None,None,None,None,None,None],\
+[Wall(),Wedge("ul"),None,None,None,None,None,None,None,None],\
+[Wall(),None,None,None,None,None,None,None,None,None],\
+[Wall(),Wedge("dl"),Wedge("dr"),None,None,None,None,None,None,None],\
+[Wall(),Wall(),Wall(),None,None,None,None,None,None,None],\
+[None,None,None,None,None,None,None,None,None,None],\
+[None,None,None,None,None,None,None,None,None,None],\
+[None,None,None,None,None,None,None,None,None,None],\
+[None,None,None,None,None,None,None,None,None,None],\
+[None,None,None,None,None,None,None,None,None,None]]
 
 while True:
     for event in pygame.event.get():
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RIGHT:
-                player.x += 1
-            if event.key == pygame.K_LEFT:
-                player.x -= 1
-            if event.key == pygame.K_UP:
-                player.y -= 1
-            if event.key == pygame.K_DOWN:
-                player.y += 1
-            if event.key == pygame.K_SPACE:
-                player.shoot()
         if event.type == pygame.QUIT:
             sys.exit()
 
+        elif event.type == pygame.KEYDOWN:
+            player.handle_keypresses(event.key)
+
     screen.fill(black)
 
-    map_x = 0
-    map_y = 0
-
-    for row in test_map.layout:
-        for column in row:
-            if column:
-                screen.blit(column.sprite, (map_x, map_y))
-
-            map_x += 60
-        map_y += 60
-        map_x = 0
+    player.update()
+    player.render()
 
     for ball in player.balls:
         ball.update()
-        ball.check_collisions()
+        ball.render()
 
-        screen.blit(ball.sprite, (round(ball.x) * 60, round(ball.y) * 60))
+    render_x = 0
+    render_y = 0
+    for row in test_map_layout:
+        for object in row:
+            if object:
+                screen.blit(object.sprite, (render_x, render_y))
 
-    screen.blit(player.sprite, (player.x * 60, player.y * 60))
+            render_x += grid_space_size
+
+        render_x = 0
+        render_y += grid_space_size
 
     pygame.display.flip()
