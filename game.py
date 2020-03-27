@@ -2,11 +2,11 @@ import pygame
 import sys
 
 class Player:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.old_x = x
-        self.old_y = y
+    def __init__(self, position):
+        self.x = position[0]
+        self.y = position[1]
+        self.old_x = self.x
+        self.old_y = self.y
 
         self.sprite = sprites["player"]
 
@@ -118,7 +118,7 @@ class Ball:
                     self.speed_x = 0
                 elif self.speed_y < 0:
                     self.speed_x = self.speed_y
-                    self.speed_x = 0
+                    self.speed_y = 0
                 elif self.speed_y > 0:
                     self.speed_y *= -1
 
@@ -146,6 +146,9 @@ class Ball:
             elif self.speed_y > 0:
                 self.y -= 0.5
 
+        elif type(collision_object) == Goal:
+            load_next_level()
+
 class Wall:
     def __init__(self):
         self.sprite = sprites["wall"]
@@ -156,18 +159,36 @@ class Wedge:
 
         self.sprite = sprites["wedges"][direction]
 
+class Goal:
+    def __init__(self):
+        self.sprite = sprites["goal"]
+
 def check_collisions(object, offset):
     try:
         check_x = round(object.x) + offset[0]
         check_y = round(object.y) + offset[1]
 
-        return test_map_layout[check_y][check_x]
+        return map_data[check_y][check_x]
 
     except IndexError:
         if type(object) == Ball:
             player.balls.remove(object)
 
             return None
+
+def load_next_level():
+    global player
+    global map_data
+    global current_level
+
+    if current_level >= len(game_data):
+        print("Game Complete")
+        sys.exit()
+
+    map_data = game_data[current_level]["map_data"]
+    player = Player(game_data[current_level]["start_position"])
+
+    current_level += 1
 
 pygame.init()
 
@@ -188,21 +209,21 @@ sprites = {"wedges": {"dl": pygame.image.load("wedge_bottom_left.png"),\
                       "ur": pygame.image.load("wedge_top_right.png")},
            "player": pygame.image.load("player.png"),\
            "wall": pygame.image.load("wall.png"),\
-           "ball": pygame.image.load("ball.png")}
+           "ball": pygame.image.load("ball.png"),\
+           "goal": pygame.image.load("goal.png")}
 
-player = Player(0, 0)
+player = Player((0, 0))
 
-test_map_layout =\
-[[Wall(),Wall(),Wall(),None,None,None,None,None,None,None],\
-[Wall(),Wedge("ul"),Wedge("ur"),None,None,None,None,None,None,None],\
-[Wall(),Wedge("dl"),None,None,None,None,None,None,None,None],\
-[None,None,None,None,None,None,None,None,None,None],\
-[None,None,None,None,None,None,None,None,None,None],\
-[None,None,None,None,None,None,None,None,None,None],\
-[None,None,None,None,None,None,None,None,None,None],\
-[None,None,None,None,None,None,None,None,None,None],\
-[None,None,None,None,None,None,None,None,None,None],\
-[None,None,None,None,None,None,None,None,None,None]]
+game_data = []
+
+current_level = 0
+map_data = []
+
+with open("game_data.txt") as file:
+    for line in file:
+        game_data.append(eval(line))
+
+load_next_level()
 
 while True:
     for event in pygame.event.get():
@@ -223,7 +244,7 @@ while True:
 
     render_x = 0
     render_y = 0
-    for row in test_map_layout:
+    for row in map_data:
         for object in row:
             if object:
                 screen.blit(object.sprite, (render_x, render_y))

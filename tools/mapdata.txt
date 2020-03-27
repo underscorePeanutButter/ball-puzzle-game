@@ -1,9 +1,9 @@
-[[Wall(),Wall(),Wall(),None,None,None,None,None,None,None],\
-[Wall(),Wedge("ul"),Wedge("ur"),None,None,None,None,None,None,None],\
+[[Wall(),Wall(),Wall(),Wall(),Wall(),None,None,None,None,None],\
+[Wall(),Wedge("ul"),None,Wedge("ur"),Wall(),None,None,None,None,None],\
+[Wall(),None,Wall(),None,Wall(),None,None,None,None,None],\
+[Wall(),None,Wall(),Goal(),Wall(),None,None,None,None,None],\
 [Wall(),Wedge("dl"),None,None,None,None,None,None,None,None],\
-[None,None,None,None,None,None,None,None,None,None],\
-[None,None,None,None,None,None,None,None,None,None],\
-[None,None,None,None,None,None,None,None,None,None],\
+[Wall(),Wall(),Wall(),Wall(),Wall(),None,None,None,None,None],\
 [None,None,None,None,None,None,None,None,None,None],\
 [None,None,None,None,None,None,None,None,None,None],\
 [None,None,None,None,None,None,None,None,None,None],\

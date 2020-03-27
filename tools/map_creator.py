@@ -27,6 +27,8 @@ while True:
                     row_string += "/"
                 else:
                     row_string += "\\"
+            elif column.startswith("Goal"):
+                row_string += "X"
         print(row_string)
         i += 1
     print()
@@ -48,7 +50,7 @@ print("Finalizing... ", end="")
 
 map_data_string = "["
 for row in map_data[:-1]:
-    map_data_string += "[" + ",".join(row) + "],\\\n"
+    map_data_string += "[" + ",".join(row) + "]," # + "\\\n"
 map_data_string += "[" + ",".join(map_data[-1]) + "]"
 map_data_string += "]"
 
