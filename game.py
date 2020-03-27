@@ -86,9 +86,6 @@ class Ball:
             self.speed_y *= -1
 
         elif type(collision_object) == Wedge:
-            self.x = round(self.x)
-            self.y = round(self.y)
-
             if collision_object.direction == "ul":
                 if self.speed_x < 0:
                     self.speed_y = -self.speed_x
@@ -136,6 +133,18 @@ class Ball:
                 elif self.speed_y > 0:
                     self.speed_x = -self.speed_y
                     self.speed_y = 0
+
+            self.x = round(self.x)
+            self.y = round(self.y)
+
+            if self.speed_x < 0:
+                self.x += 0.4
+            elif self.speed_x > 0:
+                self.x -= 0.5
+            elif self.speed_y < 0:
+                self.y += 0.4
+            elif self.speed_y > 0:
+                self.y -= 0.5
 
 class Wall:
     def __init__(self):
@@ -185,10 +194,10 @@ player = Player(0, 0)
 
 test_map_layout =\
 [[Wall(),Wall(),Wall(),None,None,None,None,None,None,None],\
-[Wall(),Wedge("ul"),None,None,None,None,None,None,None,None],\
-[Wall(),None,None,None,None,None,None,None,None,None],\
-[Wall(),Wedge("dl"),Wedge("dr"),None,None,None,None,None,None,None],\
-[Wall(),Wall(),Wall(),None,None,None,None,None,None,None],\
+[Wall(),Wedge("ul"),Wedge("ur"),None,None,None,None,None,None,None],\
+[Wall(),Wedge("dl"),None,None,None,None,None,None,None,None],\
+[None,None,None,None,None,None,None,None,None,None],\
+[None,None,None,None,None,None,None,None,None,None],\
 [None,None,None,None,None,None,None,None,None,None],\
 [None,None,None,None,None,None,None,None,None,None],\
 [None,None,None,None,None,None,None,None,None,None],\

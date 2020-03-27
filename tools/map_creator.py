@@ -10,13 +10,35 @@ while True:
         print(" ".join([str(value) for value in row]))
         print()
     print()
+    print("Visual:")
+    print()
+    print(" " + "".join([str(i) for i in range(10)]))
 
-    row = input("Row to Change/Add (leave empty to finalize): ")
-    if row == "":
+    i = 0
+    for row in map_data:
+        row_string = str(i) + ""
+        for column in row:
+            if column == "None":
+                row_string += " "
+            elif column.startswith("Wall"):
+                row_string += "="
+            elif column.startswith("Wedge"):
+                if "ul" in column or "dr" in column:
+                    row_string += "/"
+                else:
+                    row_string += "\\"
+        print(row_string)
+        i += 1
+    print()
+
+
+
+    column = input("Column to Change/Add (leave empty to finalize): ")
+    if column == "":
         break
-    row = int(row)
+    column = int(column)
+    row = int(input("Row to Change/Add: "))
 
-    column = int(input("Column to Change/Add: "))
     value = input("New Value: ")
 
     map_data[row][column] = value
